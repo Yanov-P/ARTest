@@ -13,9 +13,16 @@ import android.app.Activity
 import android.content.Context
 import android.util.Log
 import android.view.Gravity
+import android.view.MotionEvent
+import com.google.ar.core.Anchor
+import com.google.ar.core.HitResult
+import com.google.ar.core.Plane
+import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.rendering.ModelRenderable
-
-
+import com.google.ar.sceneform.ux.ArFragment
+import com.google.ar.sceneform.ux.TransformableNode
+import kotlinx.android.synthetic.main.activity_main.*
+import java.net.URI
 
 
 class AugmentedActivity : AppCompatActivity() {
@@ -24,6 +31,10 @@ class AugmentedActivity : AppCompatActivity() {
 
     private val MIN_OPENGL_VERSION = 3.0
 
+    var andyRenderable: ModelRenderable? = null
+
+    lateinit var arFragment: ArFragment
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -31,13 +42,15 @@ class AugmentedActivity : AppCompatActivity() {
             return
         }
 
-
         ModelRenderable.builder()
-            .setSource(this, R.raw.andy)
+            .setSource(this, R.raw.cube)
             .build()
-            .thenAccept({ renderable -> andyRenderable = renderable })
+            .thenAccept{ renderable: ModelRenderable ->
+                andyRenderable = renderable
+                Toast.makeText(this, "Model Loaded",Toast.LENGTH_SHORT).show()
+            }
             .exceptionally(
-                { throwable ->
+                { _: Throwable ->
                     val toast = Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG)
                     toast.setGravity(Gravity.CENTER, 0, 0)
                     toast.show()
@@ -46,17 +59,24 @@ class AugmentedActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
+        arFragment = (ar_ux_fragment as ArFragment)
+        arFragment.setOnTapArPlaneListener { hitResult, plane, motionEvent ->
+            Toast.makeText(this, "ArPlane tapped",Toast.LENGTH_SHORT).show()
+            if(andyRenderable != null){
+                val anchor = hitResult.createAnchor()
+                val anchorNode = AnchorNode(anchor)
+                anchorNode.setParent(arFragment.arSceneView.scene)
+
+                val andy = TransformableNode(arFragment.transformationSystem)
+                andy.setParent(anchorNode)
+                andy.renderable = andyRenderable
+            }
+        }
+
 
     }
 
-//    fun buildRenderable(sourceId: Int): ModelRenderable{
-//        var renderable = ModelRenderable()
-//        ModelRenderable.builder()
-//            .setSource(this, sourceId)
-//            .build().thenAccept {r : ModelRenderable ->  renderable = r}
-//            .exceptionally { Toast.makeText(this, "Unable to load renderable $sourceId",Toast.LENGTH_SHORT).show()  }
-//        return renderable
-//    }
+
 
     fun checkIsSupportedDeviceOrFinish(activity: Activity): Boolean {
 
