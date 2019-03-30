@@ -16,7 +16,7 @@ class AugmentedActivity : AppCompatActivity() {
 
     private val MIN_OPENGL_VERSION = 3.0
     private lateinit var arFragment: ArFragment
-    var myModelManager = ModelManager()
+    var myModelManager = ModelManager(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,32 +25,24 @@ class AugmentedActivity : AppCompatActivity() {
             return
         }
 
-        //    String zipFile = Environment.getExternalStorageDirectory() + "/files.zip";
-//    String unzipLocation = Environment.getExternalStorageDirectory() + "/unzipped/";
-//
-//    Decompress d = new Decompress(zipFile, unzipLocation);
-//    d.unzip();
-
-
-        myModelManager.createRenderable(this, R.raw.cube)
-        myModelManager.loadZipFile(this,"modelZip")
+        myModelManager.createRenderable(R.raw.cube)
+        myModelManager.downloadAndCreateRenderable("https://api.ari.arq.su/model/","dodge_test")
 
         setContentView(R.layout.activity_main)
 
         arFragment = (ar_ux_fragment as ArFragment)
         arFragment.setOnTapArPlaneListener { hitResult, plane, motionEvent ->
             Toast.makeText(this, "ArPlane tapped",Toast.LENGTH_SHORT).show()
-            if(myModelManager.renderable != null){
+            if(myModelManager.renderables[0] != null){
                 val anchor = hitResult.createAnchor()
                 val anchorNode = AnchorNode(anchor)
                 anchorNode.setParent(arFragment.arSceneView.scene)
 
                 val andy = TransformableNode(arFragment.transformationSystem)
                 andy.setParent(anchorNode)
-                andy.renderable = myModelManager.renderable
+                andy.renderable = myModelManager.renderables[0]
             }
         }
-
 
     }
 
